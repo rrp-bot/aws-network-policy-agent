@@ -186,7 +186,7 @@ FIPS_DOCKER_ARGS = --build-arg golang_image="$(FIPS_GOLANG_IMAGE)" \
 			  --build-arg bpf_builder_image="$(FIPS_BPF_BUILDER_IMAGE)"
 
 fips-docker-build: setup-ebpf-sdk-override ## Build the network policy agent with the Red Hat system-crypto toolchain.
-	docker build $(FIPS_DOCKER_ARGS) -t "$(IMAGE_NAME)-fips" -f Dockerfile.fips .
+	BUILDAH_LAYERS=true docker build $(FIPS_DOCKER_ARGS) -t "$(IMAGE_NAME)-fips" -f Dockerfile.fips .
 
 fips-docker-buildx: setup-ebpf-sdk-override ## Build the FIPS network policy agent for multiple platforms.
 	docker buildx build $(FIPS_DOCKER_ARGS) \
