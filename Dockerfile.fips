@@ -43,6 +43,7 @@ RUN make vmlinuxh
 # Compile CO-RE eBPF objects with Clang. No eBPF compilation occurs at runtime.
 FROM ${bpf_builder_image} AS bpfbuilder
 WORKDIR /bpfbuilder
+ENV EBPF_SDK_VERSION=unknown
 RUN dnf install -y iproute procps-ng llvm clang make gcc \
     kernel-devel elfutils-libelf-devel zlib-devel \
     && dnf clean all
