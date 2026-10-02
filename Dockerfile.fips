@@ -2,6 +2,7 @@
 ARG golang_image
 ARG base_image
 ARG bpf_builder_image
+ARG libbpf_version=1.5.0
 
 FROM ${golang_image} AS builder
 ARG TARGETOS
@@ -20,12 +21,22 @@ RUN go mod download
 COPY . ./
 RUN make build-linux
 
+# RHEL 9 does not publish libbpf-devel in the enabled UBI repositories. The
+# eBPF compiler only needs these headers, so stage them from a pinned release.
+FROM ${bpf_builder_image} AS libbpfheaders
+ARG libbpf_version
+RUN dnf install -y curl \
+    && mkdir -p /usr/include/bpf \
+    && curl -fsSL "https://github.com/libbpf/libbpf/archive/refs/tags/v${libbpf_version}.tar.gz" \
+       | tar -xz --strip-components=2 -C /usr/include/bpf "libbpf-${libbpf_version}/src" \
+    && dnf clean all
+
 # Generate the kernel type information used by CO-RE. This is a build-time
 # artifact and does not need to be produced in the final FIPS runtime image.
 FROM ${bpf_builder_image} AS vmlinuxbuilder
 WORKDIR /vmlinuxbuilder
 RUN dnf install -y iproute procps-ng llvm clang make gcc \
-    kernel-devel elfutils-libelf-devel zlib-devel libbpf-devel bpftool \
+    kernel-devel elfutils-libelf-devel zlib-devel bpftool \
     && dnf clean all
 COPY . ./
 RUN make vmlinuxh
@@ -34,10 +45,11 @@ RUN make vmlinuxh
 FROM ${bpf_builder_image} AS bpfbuilder
 WORKDIR /bpfbuilder
 RUN dnf install -y iproute procps-ng llvm clang make gcc \
-    kernel-devel elfutils-libelf-devel zlib-devel libbpf-devel \
+    kernel-devel elfutils-libelf-devel zlib-devel \
     && dnf clean all
 COPY . ./
 COPY --from=vmlinuxbuilder /vmlinuxbuilder/pkg/ebpf/c/vmlinux.h ./pkg/ebpf/c/
+COPY --from=libbpfheaders /usr/include/bpf /usr/include/bpf
 RUN make build-bpf
 
 FROM ${base_image}
