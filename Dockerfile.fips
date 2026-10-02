@@ -8,6 +8,8 @@ ARG TARGETOS
 ARG TARGETARCH
 ENV GOPROXY=direct \
     CGO_ENABLED=1 \
+    GOFIPS140=certified \
+    GO_BUILD_TAGS=netgo,ebpf,core,strictfipsruntime,no_openssl \
     STATIC_LDFLAGS=
 WORKDIR /workspace
 COPY go.mod go.sum ./
@@ -38,6 +40,7 @@ RUN make build-bpf
 FROM ${base_image}
 RUN microdnf install -y ca-certificates openssl-libs \
     && microdnf clean all
+ENV GODEBUG=fips140=auto
 WORKDIR /
 COPY --from=builder /workspace/controller .
 COPY --from=builder /workspace/aws-eks-na-cli .

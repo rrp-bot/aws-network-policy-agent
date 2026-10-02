@@ -19,6 +19,11 @@ The runtime must run on a node
 with FIPS mode enabled, and the toolchain/runtime versions and OpenSSL module
 must be separately verified against the organization’s required CMVP boundary.
 
+This repository currently targets Go 1.26. The FIPS profile therefore sets
+`GOFIPS140=certified`, uses `strictfipsruntime,no_openssl`, and runs with
+`GODEBUG=fips140=auto`. The legacy OpenSSL-backed procedure applies to older
+Red Hat Go toolchains and is not selected by this profile.
+
 The CO-RE pipeline remains separate: `vmlinux.h` is generated from kernel BTF,
 then Clang builds the eBPF objects during the image build. The objects are
 copied into the final image and loaded by the agent at runtime. This profile

@@ -119,9 +119,10 @@ VERSION_LDFLAGS := -X $(VERSION_PKG).GitVersion=$(GIT_VERSION) -X $(VERSION_PKG)
 # Build using the host's Go toolchain.
 BUILD_MODE ?= -buildmode=pie
 STATIC_LDFLAGS ?= -extldflags "-static"
-build-linux: BUILD_FLAGS = $(BUILD_MODE) -ldflags '-s -w $(LDFLAGS) $(VERSION_LDFLAGS) $(STATIC_LDFLAGS)'
+GO_BUILD_TAGS ?= netgo,ebpf,core
+build-linux: BUILD_FLAGS = $(BUILD_MODE) -ldflags '-s -w $(LDFLAGS) $(VERSION_LDFLAGS) $(STATIC_LDFLAGS)' -tags $(GO_BUILD_TAGS)
 build-linux: ## Build the controllerusing the host's Go toolchain.
-	$(GO_ENV_EBPF) go build $(VENDOR_OVERRIDE_FLAG) $(BUILD_FLAGS) -tags netgo,ebpf,core -a -o controller main.go
+	$(GO_ENV_EBPF) go build $(VENDOR_OVERRIDE_FLAG) $(BUILD_FLAGS) -a -o controller main.go
 	go build $(VENDOR_OVERRIDE_FLAG) $(BUILD_FLAGS) -o aws-eks-na-cli ./cmd/cli
 	go build $(VENDOR_OVERRIDE_FLAG) $(BUILD_FLAGS) -o aws-eks-na-cli-v6 ./cmd/cliv6
 
