@@ -10,6 +10,7 @@ ENV GOPROXY=direct \
     CGO_ENABLED=1 \
     GOFIPS140=certified \
     GO_BUILD_TAGS=netgo,ebpf,core,strictfipsruntime,no_openssl \
+    GOFLAGS=-buildvcs=false \
     STATIC_LDFLAGS=
 WORKDIR /tmp
 RUN mkdir -p /tmp/workspace && chmod 0777 /tmp/workspace
