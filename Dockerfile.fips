@@ -25,8 +25,7 @@ RUN make build-linux
 # eBPF compiler only needs these headers, so stage them from a pinned release.
 FROM ${bpf_builder_image} AS libbpfheaders
 ARG libbpf_version
-RUN dnf install -y curl \
-    && mkdir -p /usr/include/bpf \
+RUN mkdir -p /usr/include/bpf \
     && curl -fsSL "https://github.com/libbpf/libbpf/archive/refs/tags/v${libbpf_version}.tar.gz" \
        | tar -xz --strip-components=2 -C /usr/include/bpf "libbpf-${libbpf_version}/src" \
     && dnf clean all
