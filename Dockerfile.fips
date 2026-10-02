@@ -24,18 +24,18 @@ RUN make build-linux
 # artifact and does not need to be produced in the final FIPS runtime image.
 FROM ${bpf_builder_image} AS vmlinuxbuilder
 WORKDIR /vmlinuxbuilder
-RUN microdnf install -y iproute procps-ng llvm clang make gcc \
+RUN dnf install -y iproute procps-ng llvm clang make gcc \
     kernel-devel elfutils-libelf-devel zlib-devel libbpf-devel bpftool \
-    && microdnf clean all
+    && dnf clean all
 COPY . ./
 RUN make vmlinuxh
 
 # Compile CO-RE eBPF objects with Clang. No eBPF compilation occurs at runtime.
 FROM ${bpf_builder_image} AS bpfbuilder
 WORKDIR /bpfbuilder
-RUN microdnf install -y iproute procps-ng llvm clang make gcc \
+RUN dnf install -y iproute procps-ng llvm clang make gcc \
     kernel-devel elfutils-libelf-devel zlib-devel libbpf-devel \
-    && microdnf clean all
+    && dnf clean all
 COPY . ./
 COPY --from=vmlinuxbuilder /vmlinuxbuilder/pkg/ebpf/c/vmlinux.h ./pkg/ebpf/c/
 RUN make build-bpf
