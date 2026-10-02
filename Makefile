@@ -179,8 +179,10 @@ docker-build: setup-ebpf-sdk-override## Build docker image with the manager.
 # image values to approved, immutable digests in the release environment.
 FIPS_GOLANG_IMAGE ?= registry.access.redhat.com/ubi9/go-toolset:latest
 FIPS_BASE_IMAGE ?= registry.access.redhat.com/ubi9/ubi-minimal:latest
+FIPS_BPF_BUILDER_IMAGE ?= registry.access.redhat.com/ubi9/ubi:latest
 FIPS_DOCKER_ARGS = --build-arg golang_image="$(FIPS_GOLANG_IMAGE)" \
-			  --build-arg base_image="$(FIPS_BASE_IMAGE)"
+			  --build-arg base_image="$(FIPS_BASE_IMAGE)" \
+			  --build-arg bpf_builder_image="$(FIPS_BPF_BUILDER_IMAGE)"
 
 fips-docker-build: setup-ebpf-sdk-override ## Build the network policy agent with the Red Hat system-crypto toolchain.
 	docker build $(FIPS_DOCKER_ARGS) -t "$(IMAGE_NAME)-fips" -f Dockerfile.fips .

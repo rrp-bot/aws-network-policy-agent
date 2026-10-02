@@ -1,6 +1,7 @@
 # Build the Go agent with the Red Hat system-crypto toolchain.
 ARG golang_image
 ARG base_image
+ARG bpf_builder_image
 
 FROM ${golang_image} AS builder
 ARG TARGETOS
@@ -18,22 +19,20 @@ RUN make build-linux
 
 # Generate the kernel type information used by CO-RE. This is a build-time
 # artifact and does not need to be produced in the final FIPS runtime image.
-FROM public.ecr.aws/amazonlinux/amazonlinux:2023 AS vmlinuxbuilder
+FROM ${bpf_builder_image} AS vmlinuxbuilder
 WORKDIR /vmlinuxbuilder
-RUN yum update -y && \
-    yum install -y iproute procps-ng llvm clang make gcc \
-    kernel-devel elfutils-libelf-devel zlib-devel libbpf-devel bpftool && \
-    yum clean all
+RUN microdnf install -y iproute procps-ng llvm clang make gcc \
+    kernel-devel elfutils-libelf-devel zlib-devel libbpf-devel bpftool \
+    && microdnf clean all
 COPY . ./
 RUN make vmlinuxh
 
 # Compile CO-RE eBPF objects with Clang. No eBPF compilation occurs at runtime.
-FROM public.ecr.aws/amazonlinux/amazonlinux:2023 AS bpfbuilder
+FROM ${bpf_builder_image} AS bpfbuilder
 WORKDIR /bpfbuilder
-RUN yum update -y && \
-    yum install -y iproute procps-ng llvm clang make gcc \
-    kernel-devel elfutils-libelf-devel zlib-devel libbpf-devel && \
-    yum clean all
+RUN microdnf install -y iproute procps-ng llvm clang make gcc \
+    kernel-devel elfutils-libelf-devel zlib-devel libbpf-devel \
+    && microdnf clean all
 COPY . ./
 COPY --from=vmlinuxbuilder /vmlinuxbuilder/pkg/ebpf/c/vmlinux.h ./pkg/ebpf/c/
 RUN make build-bpf

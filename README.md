@@ -13,7 +13,9 @@ Starting with Amazon VPC CNI v1.14.0, Network Policy agent will be automatically
 The optional `make fips-docker-build` profile builds the Go agent with the
 Red Hat system-crypto toolchain and a UBI minimal runtime. Configure
 `FIPS_GOLANG_IMAGE` and `FIPS_BASE_IMAGE` to approved immutable image digests;
-the defaults are convenience placeholders only. The runtime must run on a node
+the defaults are convenience placeholders only. `FIPS_BPF_BUILDER_IMAGE` can
+override the UBI builder used for Clang, LLVM, bpftool, and kernel packages.
+The runtime must run on a node
 with FIPS mode enabled, and the toolchain/runtime versions and OpenSSL module
 must be separately verified against the organization’s required CMVP boundary.
 
