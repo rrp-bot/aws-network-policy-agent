@@ -8,6 +8,20 @@ Amazon EKS Network Policy Agent is a daemonset that is responsible for enforcing
 
 Starting with Amazon VPC CNI v1.14.0, Network Policy agent will be automatically installed. Review the instructions in the [EKS User Guide](https://docs.aws.amazon.com/eks/latest/userguide/cni-network-policy.html).
 
+## FIPS-oriented container build
+
+The optional `make fips-docker-build` profile builds the Go agent with the
+Red Hat system-crypto toolchain and a UBI minimal runtime. Configure
+`FIPS_GOLANG_IMAGE` and `FIPS_BASE_IMAGE` to approved immutable image digests;
+the defaults are convenience placeholders only. The runtime must run on a node
+with FIPS mode enabled, and the toolchain/runtime versions and OpenSSL module
+must be separately verified against the organization’s required CMVP boundary.
+
+The CO-RE pipeline remains separate: `vmlinux.h` is generated from kernel BTF,
+then Clang builds the eBPF objects during the image build. The objects are
+copied into the final image and loaded by the agent at runtime. This profile
+does not itself confer FIPS 140 validation or generate SBOM/SLSA attestations.
+
 ## Getting Started
 You’ll need a Kubernetes cluster version 1.25+ to run against. You can use [KIND](https://sigs.k8s.io/kind) to get a local cluster for testing, or run against a remote cluster.
 

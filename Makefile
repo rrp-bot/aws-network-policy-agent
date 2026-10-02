@@ -46,7 +46,7 @@ endif
 SHELL = /usr/bin/env bash -o pipefail
 .SHELLFLAGS = -ec
 
-.PHONY: all
+.PHONY: all fips-docker-build fips-docker-buildx
 all: build
 
 ##@ General
@@ -118,7 +118,8 @@ VERSION_LDFLAGS := -X $(VERSION_PKG).GitVersion=$(GIT_VERSION) -X $(VERSION_PKG)
 
 # Build using the host's Go toolchain.
 BUILD_MODE ?= -buildmode=pie
-build-linux: BUILD_FLAGS = $(BUILD_MODE) -ldflags '-s -w $(LDFLAGS) $(VERSION_LDFLAGS) -extldflags "-static"'
+STATIC_LDFLAGS ?= -extldflags "-static"
+build-linux: BUILD_FLAGS = $(BUILD_MODE) -ldflags '-s -w $(LDFLAGS) $(VERSION_LDFLAGS) $(STATIC_LDFLAGS)'
 build-linux: ## Build the controllerusing the host's Go toolchain.
 	$(GO_ENV_EBPF) go build $(VENDOR_OVERRIDE_FLAG) $(BUILD_FLAGS) -tags netgo,ebpf,core -a -o controller main.go
 	go build $(VENDOR_OVERRIDE_FLAG) $(BUILD_FLAGS) -o aws-eks-na-cli ./cmd/cli
@@ -173,6 +174,24 @@ build-bpf: ## Build BPF.
 #	docker build -t ${IMAGE_NAME} .
 docker-build: setup-ebpf-sdk-override## Build docker image with the manager.
 	docker build -t ${IMAGE_NAME} --build-arg golang_image="$(GOLANG_IMAGE)" --build-arg base_image="$(BASE_IMAGE)" .
+
+# FIPS builds use the Red Hat Go toolchain and UBI minimal runtime. Set both
+# image values to approved, immutable digests in the release environment.
+FIPS_GOLANG_IMAGE ?= registry.access.redhat.com/ubi9/go-toolset:latest
+FIPS_BASE_IMAGE ?= registry.access.redhat.com/ubi9/ubi-minimal:latest
+FIPS_DOCKER_ARGS = --build-arg golang_image="$(FIPS_GOLANG_IMAGE)" \
+			  --build-arg base_image="$(FIPS_BASE_IMAGE)"
+
+fips-docker-build: setup-ebpf-sdk-override ## Build the network policy agent with the Red Hat system-crypto toolchain.
+	docker build $(FIPS_DOCKER_ARGS) -t "$(IMAGE_NAME)-fips" -f Dockerfile.fips .
+
+fips-docker-buildx: setup-ebpf-sdk-override ## Build the FIPS network policy agent for multiple platforms.
+	docker buildx build $(FIPS_DOCKER_ARGS) \
+		-f Dockerfile.fips \
+		--platform "$(PLATFORMS)" \
+		-t "$(IMAGE_NAME)-fips" \
+		--push \
+		.
 
 .PHONY: docker-push
 docker-push: ## Push docker image with the manager.
