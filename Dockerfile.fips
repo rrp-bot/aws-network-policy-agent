@@ -8,7 +8,6 @@ ARG TARGETOS
 ARG TARGETARCH
 ENV GOPROXY=direct \
     CGO_ENABLED=1 \
-    GOEXPERIMENT=systemcrypto \
     STATIC_LDFLAGS=
 WORKDIR /workspace
 COPY go.mod go.sum ./
