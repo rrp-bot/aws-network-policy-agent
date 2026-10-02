@@ -34,6 +34,7 @@ RUN mkdir -p /usr/include/bpf \
 # artifact and does not need to be produced in the final FIPS runtime image.
 FROM ${bpf_builder_image} AS vmlinuxbuilder
 WORKDIR /vmlinuxbuilder
+ENV EBPF_SDK_VERSION=unknown
 RUN dnf install -y iproute procps-ng llvm clang make gcc \
     kernel-devel elfutils-libelf-devel zlib-devel bpftool \
     && dnf clean all
